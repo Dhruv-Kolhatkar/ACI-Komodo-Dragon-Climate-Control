@@ -6,9 +6,24 @@ from komodo_model import KomodoEnvironmentModel
 model = KomodoEnvironmentModel()
 
 # Function to fetch weather data from API
+# Function to fetch weather data from API
 def get_weather_data():
-    # Replace with actual API call
-    return 30, 60, 5  # Example values for temperature, humidity, wind
+    url = "https://api.openweathermap.org/data/2.5/weather?lat=-6.175247&lon=106.8270488&units=metric&appid=c98add84c08890cad992235bd38e6ef1"
+    
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # Raise exception for HTTP errors
+        data = response.json()
+        
+        # Extract relevant weather information
+        temperature = data["main"]["temp"]  # Current temperature
+        humidity = data["main"]["humidity"]  # Humidity percentage
+        wind_speed = data["wind"]["speed"]  # Wind speed in m/s
+
+        return temperature, humidity, wind_speed
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching weather data: {e}")
+        return None, None, None
 
 # Streamlit app
 def main():
