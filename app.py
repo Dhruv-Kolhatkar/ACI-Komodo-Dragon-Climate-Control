@@ -1,14 +1,23 @@
 import streamlit as st
 import requests
 from komodo_model import KomodoEnvironmentModel
-
+import os
+from dotenv import load_dotenv
 # Initialize the model
 model = KomodoEnvironmentModel()
+load_dotenv()
 
 # Function to fetch weather data from API
 # Function to fetch weather data from API
 def get_weather_data():
-    url = "https://api.openweathermap.org/data/2.5/weather?lat=-6.175247&lon=106.8270488&units=metric&appid=c98add84c08890cad992235bd38e6ef1"
+    # Fetch API key from environment variable
+    api_key = os.getenv("OPENWEATHER_API_KEY")
+    
+    if not api_key:
+        raise ValueError("API key not found. Please set it in the .env file.")
+
+    # Construct the API URL
+    url = f"https://api.openweathermap.org/data/2.5/weather?lat=-6.175247&lon=106.8270488&units=metric&appid={api_key}"
     
     try:
         response = requests.get(url)
