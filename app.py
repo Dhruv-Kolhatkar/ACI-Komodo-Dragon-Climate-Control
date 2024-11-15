@@ -1,45 +1,25 @@
 import streamlit as st
 import requests
 from komodo_model import KomodoEnvironmentModel
-import os
-from dotenv import load_dotenv
-# Initialize the model
-model = KomodoEnvironmentModel()
-load_dotenv()
 
-# Function to fetch weather data from API
+# Initialize the model
+if 'model' not in st.session_state:
+    st.session_state.model = KomodoEnvironmentModel()
+
 # Function to fetch weather data from API
 def get_weather_data():
-    # Fetch API key from environment variable
-    api_key = os.getenv("OPENWEATHER_API_KEY")
-    
-    if not api_key:
-        raise ValueError("API key not found. Please set it in the .env file.")
-
-    # Construct the API URL
-    url = f"https://api.openweathermap.org/data/2.5/weather?lat=-6.175247&lon=106.8270488&units=metric&appid={api_key}"
-    
-    try:
-        response = requests.get(url)
-        response.raise_for_status()  # Raise exception for HTTP errors
-        data = response.json()
-        
-        # Extract relevant weather information
-        temperature = data["main"]["temp"]  # Current temperature
-        humidity = data["main"]["humidity"]  # Humidity percentage
-        wind_speed = data["wind"]["speed"]  # Wind speed in m/s
-
-        return temperature, humidity, wind_speed
-    except requests.exceptions.RequestException as e:
-        print(f"Error fetching weather data: {e}")
-        return None, None, None
+    # Replace with actual API call
+    return 30, 60, 5  # Example values for temperature, humidity, wind
 
 # Streamlit app
 def main():
     st.title("Komodo Dragon Environment Control")
 
     # Get current weather data
-    current_temp, current_humidity, current_wind = get_weather_data()
+    if 'current_weather' not in st.session_state:
+        st.session_state.current_weather = get_weather_data()
+
+    current_temp, current_humidity, current_wind = st.session_state.current_weather
 
     # Display current weather
     st.header("Current Weather in Indonesia")
@@ -48,7 +28,10 @@ def main():
     st.write(f"Wind Speed: {current_wind:.1f} m/s")
 
     # Get model recommendations
-    recommended_temp, recommended_humidity, recommended_wind = model.get_next_weather(current_temp, current_humidity, current_wind)
+    if 'recommended_weather' not in st.session_state:
+        st.session_state.recommended_weather = st.session_state.model.get_next_weather(current_temp, current_humidity, current_wind)
+
+    recommended_temp, recommended_humidity, recommended_wind = st.session_state.recommended_weather
 
     # Display recommendations
     st.header("Recommended Environment Settings")
@@ -64,15 +47,19 @@ def main():
         reward = 11 - reaction
 
         # Get the states
-        current_state = model.get_state(current_temp, current_humidity, current_wind)
-        next_state = model.get_state(recommended_temp, recommended_humidity, recommended_wind)
+        current_state = st.session_state.model.get_state(current_temp, current_humidity, current_wind)
+        next_state = st.session_state.model.get_state(recommended_temp, recommended_humidity, recommended_wind)
 
         # Train the model
-        action = model.choose_action(current_state)
-        model.train(current_state, action, reward, next_state)
+        action = st.session_state.model.choose_action(current_state)
+        st.session_state.model.train(current_state, action, reward, next_state)
+
+        # Update recommendations
+        st.session_state.recommended_weather = st.session_state.model.get_next_weather(current_temp, current_humidity, current_wind)
 
         st.success("Model updated based on the Komodo dragon's reaction!")
-        st.experimental_rerun()
+        if st.button('Rerun'):
+            st.experimental_rerun()
 
 if __name__ == "__main__":
     main()
